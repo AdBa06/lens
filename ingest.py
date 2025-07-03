@@ -194,16 +194,6 @@ class TelemetryIngestor:
         try:
             db = get_db_session()
             
-            # Check if event already exists
-            existing_event = db.query(TelemetryEvent).filter(
-                TelemetryEvent.evaluation_id == event_data['evaluation_id']
-            ).first()
-            
-            if existing_event:
-                logger.warning(f"Event {event_data['evaluation_id']} already exists, skipping")
-                db.close()
-                return False
-            
             # Create telemetry event
             telemetry_event = TelemetryEvent(
                 evaluation_id=event_data['evaluation_id'],

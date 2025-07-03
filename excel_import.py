@@ -142,20 +142,25 @@ class ExcelImporter:
             column_map = self.detect_columns(df)
             logger.info(f"Detected column mapping: {column_map}")
             
-            # Check for required columns
+            # Check for required columns and add defaults for missing ones
             missing = [col for col in self.required_columns if col not in column_map]
             if missing:
                 logger.warning(f"Missing required columns: {missing}")
-                # Try to provide defaults for some missing columns
+                # Provide defaults for ALL missing columns
                 if 'evaluation_id' not in column_map:
                     logger.info("Generating evaluation IDs from row numbers")
-                    df['generated_eval_id'] = [f"excel_row_{i+1:04d}" for i in range(len(df))]
+                    df['generated_eval_id'] = [f"synthetic_row_{i+1:04d}" for i in range(len(df))]
                     column_map['evaluation_id'] = 'generated_eval_id'
                 
                 if 'skill_input' not in column_map:
-                    logger.info("Using generic skill_input")
-                    df['generated_skill_input'] = "User request processing"
+                    logger.info("Using default skill_input: NA")
+                    df['generated_skill_input'] = "NA"
                     column_map['skill_input'] = 'generated_skill_input'
+                
+                if 'skill_output' not in column_map:
+                    logger.info("Using default skill_output: NA")
+                    df['generated_skill_output'] = '{"error": "NA", "message": "No output data available", "status_code": null}'
+                    column_map['skill_output'] = 'generated_skill_output'
             
             # Convert to telemetry events
             events = []
@@ -169,6 +174,12 @@ class ExcelImporter:
                             value = row[excel_col]
                             if our_col == 'skill_output':
                                 event[our_col] = self.parse_skill_output(value)
+                            elif our_col == 'evaluation_id':
+                                # Generate unique ID if empty or missing
+                                eval_id = str(value) if not pd.isna(value) else ""
+                                if not eval_id or eval_id.strip() == "":
+                                    eval_id = f"synthetic_row_{idx+1:04d}"
+                                event[our_col] = eval_id
                             else:
                                 event[our_col] = str(value) if not pd.isna(value) else ""
                     
@@ -177,11 +188,8 @@ class ExcelImporter:
                         ai_value = row[column_map['ai_output']]
                         event['ai_output'] = str(ai_value) if not pd.isna(ai_value) else None
                     
-                    # Validate event has minimum required fields
-                    if all(field in event for field in ['evaluation_id', 'customer_prompt', 'skill_input', 'skill_output']):
-                        events.append(event)
-                    else:
-                        logger.warning(f"Skipping row {idx+1}: missing required fields")
+                    # Always add event since we've ensured all required fields exist with defaults
+                    events.append(event)
                 
                 except Exception as e:
                     logger.error(f"Error processing row {idx+1}: {e}")

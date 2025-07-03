@@ -106,8 +106,8 @@ class ClusteringEngine:
             return np.array([]), {}
 
     def perform_kmeans_clustering(self, embeddings: np.ndarray, 
-                                n_clusters: int = None) -> Tuple[np.ndarray, Dict[str, Any]]:
-        """Perform K-Means clustering"""
+                                n_clusters: int = None, max_cluster_size: int = None) -> Tuple[np.ndarray, Dict[str, Any]]:
+        """Perform K-Means clustering with size constraints"""
         if n_clusters is None:
             # Use elbow method to determine optimal number of clusters
             n_clusters = self._find_optimal_k(embeddings)
@@ -117,21 +117,28 @@ class ClusteringEngine:
             embeddings_scaled = self.scaler.fit_transform(embeddings)
             
             # Perform K-Means clustering
-            kmeans = KMeans(n_clusters=n_clusters, random_state=42, n_init=10)
+            kmeans = KMeans(n_clusters=n_clusters, random_state=42, n_init='auto')
             cluster_labels = kmeans.fit_predict(embeddings_scaled)
+            
+            # Apply size constraints if specified
+            if max_cluster_size is not None:
+                cluster_labels = self._enforce_cluster_size_limit(
+                    embeddings_scaled, cluster_labels, max_cluster_size
+                )
             
             # Calculate silhouette score
             silhouette_avg = silhouette_score(embeddings_scaled, cluster_labels)
             
             metrics = {
-                'algorithm': 'kmeans',
-                'n_clusters': n_clusters,
+                'algorithm': 'kmeans_size_constrained' if max_cluster_size else 'kmeans',
+                'n_clusters': len(set(cluster_labels)),
+                'max_cluster_size': max_cluster_size,
                 'silhouette_score': silhouette_avg,
                 'inertia': kmeans.inertia_,
                 'cluster_centers': kmeans.cluster_centers_.tolist()
             }
             
-            logger.info(f"K-Means clustering completed: {n_clusters} clusters, silhouette score: {silhouette_avg:.3f}")
+            logger.info(f"K-Means clustering completed: {len(set(cluster_labels))} clusters, max size: {max(np.bincount(cluster_labels))}")
             return cluster_labels, metrics
             
         except Exception as e:
@@ -192,6 +199,42 @@ class ClusteringEngine:
             distances.append(float(distance))
         
         return distances
+    
+    def _enforce_cluster_size_limit(self, embeddings: np.ndarray, 
+                                  cluster_labels: np.ndarray, 
+                                  max_size: int) -> np.ndarray:
+        """Split clusters that exceed max_size"""
+        new_labels = cluster_labels.copy()
+        next_label = int(max(cluster_labels)) + 1
+        
+        # Check each cluster
+        for label in set(cluster_labels):
+            cluster_mask = cluster_labels == label
+            cluster_size = int(np.sum(cluster_mask))
+            
+            if cluster_size > max_size:
+                # Get embeddings for this cluster
+                cluster_embeddings = embeddings[cluster_mask]
+                cluster_indices = np.where(cluster_mask)[0]
+                
+                # Calculate how many sub-clusters we need
+                n_subclusters = max(2, int(np.ceil(cluster_size / max_size)))
+                
+                # Ensure we don't try to create more clusters than we have points
+                n_subclusters = min(n_subclusters, cluster_size)
+                
+                if n_subclusters > 1:
+                    # Sub-cluster using K-means
+                    sub_kmeans = KMeans(n_clusters=n_subclusters, random_state=42, n_init='auto')
+                    sub_labels = sub_kmeans.fit_predict(cluster_embeddings)
+                    
+                    # Assign new labels to the sub-clusters
+                    for i, sub_label in enumerate(sub_labels):
+                        new_labels[cluster_indices[i]] = next_label + sub_label
+                    
+                    next_label += n_subclusters
+        
+        return new_labels
 
 class ClusterManager:
     """Manage clusters and assignments in the database"""
@@ -276,12 +319,13 @@ class ClusterManager:
                 cluster_size = list(cluster_labels).count(label)
                 is_noise = (label == -1)
                 
+                # Convert noise cluster to "Uncategorized" cluster - treat as regular cluster
                 cluster = Cluster(
                     cluster_label=int(label),
                     cluster_algorithm=metrics['algorithm'],
                     cluster_parameters=metrics,
                     size=cluster_size,
-                    is_noise=is_noise
+                    is_noise=False  # Mark all clusters as regular clusters, including former "noise"
                 )
                 
                 db.add(cluster)

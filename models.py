@@ -102,8 +102,10 @@ class ClusterSummary(Base):
     cluster_id = Column(Integer, ForeignKey("clusters.id"))
     
     # GPT-4 generated summary
+    label = Column(String(255))  # Short, business-meaningful label
     summary_text = Column(Text)
     root_cause = Column(Text)
+    recommendations = Column(JSON)  # List of actionable recommendations
     
     # Common patterns
     common_plugins = Column(JSON)

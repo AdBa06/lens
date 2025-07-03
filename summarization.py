@@ -101,19 +101,38 @@ class ClusterSummarizer:
             db.close()
     
     def create_gpt_prompt(self, cluster_data: Dict[str, Any]) -> str:
-        """Create prompt for GPT-4 analysis"""
-        prompt = """Analyze the following cluster of failed Copilot responses and provide a comprehensive summary.
+        """Create prompt for GPT-4 analysis with dynamic, security-focused labeling"""
+        cluster = cluster_data['cluster']
+        sample_prompts = '\n'.join([f"- {prompt[:200]}..." for prompt in cluster_data['customer_prompts'][:5]])
+        sample_errors = '\n'.join([f"- {error[:200]}..." for error in cluster_data['sample_error_messages'][:5]])
+        sample_outputs = '\n'.join([f"- {json.dumps(output)[:300]}..." for output in cluster_data['skill_outputs'][:3]])
+
+        prompt = f"""
+You are an expert Security Copilot analyst. Given a cluster of Security Copilot prompts (both successful and failed), analyze what customers are trying to accomplish and what types of errors occur.
+
+PROVIDE TWO PERSPECTIVES:
+
+1. CUSTOMER INTENT ANALYSIS (for customer insights page):
+- What are customers trying to accomplish with these prompts?
+- What security topics/areas are they asking about?
+- Generate a short, business-friendly label (max 4 words) describing the customer intent
+- Write 2-3 sentences describing what customers in this cluster are trying to do
+
+2. ERROR ANALYSIS (for error analysis page):
+- What are the main technical failure patterns?
+- What are the root causes of failures?
+- What specific fixes should be implemented?
 
 CLUSTER INFORMATION:
-- Cluster ID: {cluster_id}
-- Size: {size} failures
-- Algorithm: {algorithm}
+- Cluster ID: {cluster.id}
+- Size: {cluster.size} events
+- Algorithm: {cluster.cluster_algorithm}
 
 COMMON PATTERNS:
-- Plugins: {plugins}
-- Endpoints: {endpoints}
-- Status Codes: {status_codes}
-- Error Types: {error_types}
+- Plugins: {json.dumps(cluster_data['common_plugins'], indent=2)}
+- Endpoints: {json.dumps(cluster_data['common_endpoints'], indent=2)}
+- Status Codes: {json.dumps(cluster_data['common_status_codes'], indent=2)}
+- Error Types: {json.dumps(cluster_data['common_error_types'], indent=2)}
 
 SAMPLE CUSTOMER PROMPTS (first 5):
 {sample_prompts}
@@ -124,43 +143,21 @@ SAMPLE ERROR MESSAGES (first 5):
 SAMPLE SKILL OUTPUTS (first 3):
 {sample_outputs}
 
-Please provide:
-1. A clear, concise summary of what this cluster represents
-2. The likely root cause of these failures
-3. Common patterns and themes
-4. Recommendations for resolution or investigation
+IMPORTANT: You must respond with valid JSON only. Do not include any explanatory text before or after the JSON.
 
 Format your response as JSON with the following structure:
 {{
-    "summary": "Brief description of the cluster",
-    "root_cause": "Primary reason for these failures",
-    "patterns": ["pattern1", "pattern2", "pattern3"],
-    "recommendations": ["recommendation1", "recommendation2"]
-}}"""
+  "label": "Short customer intent label (max 4 words)",
+  "customer_summary": "2-3 sentences describing what customers are trying to accomplish",
+  "root_cause": "Technical root cause analysis of failures",
+  "error_patterns": ["pattern1", "pattern2", "pattern3"],
+  "recommendations": ["recommendation1", "recommendation2", "recommendation3"]
+}}
 
-        cluster = cluster_data['cluster']
-        
-        # Format sample data
-        sample_prompts = '\n'.join([f"- {prompt[:200]}..." 
-                                  for prompt in cluster_data['customer_prompts'][:5]])
-        sample_errors = '\n'.join([f"- {error[:200]}..." 
-                                 for error in cluster_data['sample_error_messages'][:5]])
-        sample_outputs = '\n'.join([f"- {json.dumps(output)[:300]}..." 
-                                  for output in cluster_data['skill_outputs'][:3]])
-        
-        return prompt.format(
-            cluster_id=cluster.id,
-            size=cluster.size,
-            algorithm=cluster.cluster_algorithm,
-            plugins=json.dumps(cluster_data['common_plugins'], indent=2),
-            endpoints=json.dumps(cluster_data['common_endpoints'], indent=2),
-            status_codes=json.dumps(cluster_data['common_status_codes'], indent=2),
-            error_types=json.dumps(cluster_data['common_error_types'], indent=2),
-            sample_prompts=sample_prompts,
-            sample_errors=sample_errors,
-            sample_outputs=sample_outputs
-        )
-    
+Respond with ONLY the JSON object, no other text.
+"""
+        return prompt
+
     def generate_gpt_summary(self, prompt: str) -> Optional[Dict[str, Any]]:
         """Generate summary using GPT-4"""
         if not self.openai_client:
@@ -197,102 +194,101 @@ Format your response as JSON with the following structure:
             return None
     
     def _parse_text_response(self, content: str) -> Dict[str, Any]:
-        """Parse non-JSON GPT response"""
-        # Simple fallback parsing
+        """Parse non-JSON GPT response with better structure detection"""
+        # Initialize defaults
+        result = {
+            'label': 'Customer Intent Analysis',
+            'customer_summary': 'Customers are seeking security-related insights and analysis.',
+            'root_cause': 'Analysis pending',
+            'error_patterns': [],
+            'recommendations': []
+        }
+        
         lines = content.split('\n')
-        
-        summary = ""
-        root_cause = ""
-        patterns = []
-        recommendations = []
-        
-        current_section = None
+        current_field = None
         
         for line in lines:
             line = line.strip()
             if not line:
                 continue
+            
+            # Check for field indicators
+            if '"label"' in line and ':' in line:
+                # Extract label value
+                label_part = line.split(':', 1)[1].strip().strip(',').strip('"')
+                if label_part and label_part != 'null':
+                    result['label'] = label_part
+                    
+            elif '"customer_summary"' in line and ':' in line:
+                # Extract customer summary value  
+                summary_part = line.split(':', 1)[1].strip().strip(',').strip('"')
+                if summary_part and summary_part != 'null':
+                    result['customer_summary'] = summary_part
+                    current_field = 'customer_summary'
+                    
+            elif '"root_cause"' in line and ':' in line:
+                # Extract root cause value
+                cause_part = line.split(':', 1)[1].strip().strip(',').strip('"')
+                if cause_part and cause_part != 'null':
+                    result['root_cause'] = cause_part
+                    current_field = 'root_cause'
+                    
+            elif current_field == 'customer_summary' and not line.startswith('"'):
+                # Continue building customer summary
+                result['customer_summary'] += ' ' + line.strip('"').strip(',')
                 
-            if 'summary' in line.lower():
-                current_section = 'summary'
-            elif 'root cause' in line.lower():
-                current_section = 'root_cause'
-            elif 'pattern' in line.lower():
-                current_section = 'patterns'
-            elif 'recommendation' in line.lower():
-                current_section = 'recommendations'
-            elif line.startswith('-') or line.startswith('•'):
-                content_line = line[1:].strip()
-                if current_section == 'patterns':
-                    patterns.append(content_line)
-                elif current_section == 'recommendations':
-                    recommendations.append(content_line)
-            else:
-                if current_section == 'summary':
-                    summary += line + " "
-                elif current_section == 'root_cause':
-                    root_cause += line + " "
+            elif current_field == 'root_cause' and not line.startswith('"'):
+                # Continue building root cause
+                result['root_cause'] += ' ' + line.strip('"').strip(',')
         
-        return {
-            'summary': summary.strip(),
-            'root_cause': root_cause.strip(),
-            'patterns': patterns,
-            'recommendations': recommendations
-        }
+        # Clean up the fields
+        result['label'] = result['label'].strip('"').strip(',')[:50]  # Max 50 chars
+        result['customer_summary'] = result['customer_summary'].strip('"').strip(',')
+        result['root_cause'] = result['root_cause'].strip('"').strip(',')
+        
+        return result
     
     def summarize_cluster(self, cluster_id: int) -> bool:
-        """Generate and store summary for a cluster"""
+        """Generate and store dynamic, security-focused summary and label for a cluster"""
         try:
-            # Get cluster data
             cluster_data = self.get_cluster_data(cluster_id)
             if not cluster_data:
                 return False
-            
-            # Generate GPT prompt
             prompt = self.create_gpt_prompt(cluster_data)
-            
-            # Get GPT summary
             gpt_response = self.generate_gpt_summary(prompt)
             if not gpt_response:
                 logger.error(f"Failed to generate GPT summary for cluster {cluster_id}")
                 return False
-            
-            # Store summary in database
             db = get_db_session()
-            
             try:
-                # Remove existing summary
                 existing_summary = db.query(ClusterSummary).filter(
                     ClusterSummary.cluster_id == cluster_id
                 ).first()
                 if existing_summary:
                     db.delete(existing_summary)
-                
-                # Create new summary
+                # Store LLM-generated label and summary
                 cluster_summary = ClusterSummary(
                     cluster_id=cluster_id,
-                    summary_text=gpt_response.get('summary', ''),
+                    label=gpt_response.get('label', ''),
+                    summary_text=gpt_response.get('customer_summary', ''),
                     root_cause=gpt_response.get('root_cause', ''),
+                    recommendations=gpt_response.get('recommendations', []),
                     common_plugins=list(cluster_data['common_plugins'].keys()),
                     common_endpoints=list(cluster_data['common_endpoints'].keys()),
                     common_error_codes=list(cluster_data['common_status_codes'].keys()),
                     sample_prompts=cluster_data['customer_prompts'][:10],
-                    gpt_model=config.OPENAI_MODEL
+                    gpt_model=config.OPENAI_MODEL,
                 )
-                
                 db.add(cluster_summary)
                 db.commit()
-                
-                logger.info(f"Successfully generated summary for cluster {cluster_id}")
+                logger.info(f"Successfully generated dynamic label and summary for cluster {cluster_id}")
                 return True
-                
             except Exception as e:
                 logger.error(f"Error storing summary for cluster {cluster_id}: {e}")
                 db.rollback()
                 return False
             finally:
                 db.close()
-                
         except Exception as e:
             logger.error(f"Error summarizing cluster {cluster_id}: {e}")
             return False
@@ -357,4 +353,4 @@ Format your response as JSON with the following structure:
             db.close()
 
 # Singleton instance
-cluster_summarizer = ClusterSummarizer() 
+cluster_summarizer = ClusterSummarizer()

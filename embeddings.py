@@ -58,10 +58,10 @@ class EmbeddingGenerator:
     def prepare_embedding_text(self, event: TelemetryEvent, source: str = "customer_prompt+skill_output") -> str:
         """Prepare text for embedding generation"""
         if source == "customer_prompt+skill_output":
-            skill_output_str = str(event.skill_output) if event.skill_output else ""
+            skill_output_str = str(event.skill_output) if event.skill_output is not None else ""
             return f"Customer Prompt: {event.customer_prompt}\nSkill Output: {skill_output_str}"
         elif source == "skill_input+skill_output":
-            skill_output_str = str(event.skill_output) if event.skill_output else ""
+            skill_output_str = str(event.skill_output) if event.skill_output is not None else ""
             return f"Skill Input: {event.skill_input}\nSkill Output: {skill_output_str}"
         else:
             raise ValueError(f"Invalid embedding source: {source}")
