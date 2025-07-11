@@ -23,6 +23,44 @@ from config import config
 logger = logging.getLogger(__name__)
 
 class EnhancedClusteringEngine:
+    def _split_large_clusters(self, vectors, labels, max_cluster_size, clustering_method, sample_weights=None, depth=0):
+        """Recursively split clusters larger than max_cluster_size using the same clustering method."""
+        import numpy as np
+        new_labels = labels.copy()
+        next_label = new_labels.max() + 1 if len(new_labels) > 0 else 0
+        unique_labels = set(new_labels)
+        for label in unique_labels:
+            if label == -1:
+                continue  # skip noise
+            indices = np.where(new_labels == label)[0]
+            if len(indices) > max_cluster_size:
+                # Re-cluster this cluster's members
+                sub_vectors = vectors[indices]
+                sub_weights = sample_weights[indices] if sample_weights is not None else None
+                # Use the same clustering method as before
+                if clustering_method == 'hdbscan' and HDBSCAN_AVAILABLE:
+                    result = self._try_hdbscan_clustering(sub_vectors, min_cluster_size=max(2, max_cluster_size//2), sample_weights=sub_weights)
+                elif clustering_method == 'kmeans':
+                    result = self._try_kmeans_clustering(sub_vectors, sample_weights=sub_weights)
+                elif clustering_method == 'dbscan':
+                    result = self._try_dbscan_clustering(sub_vectors, sample_weights=sub_weights)
+                else:
+                    continue
+                sub_labels = result['labels']
+                # Remap sub-labels to global label space
+                sub_unique = set(sub_labels)
+                sub_map = {subl: (label if i == 0 else next_label + i - 1) for i, subl in enumerate(sub_unique)}
+                for i, idx in enumerate(indices):
+                    if sub_labels[i] == -1:
+                        new_labels[idx] = -1
+                    else:
+                        new_labels[idx] = sub_map[sub_labels[i]]
+                next_label += len(sub_unique) - 1
+        # Check if any clusters are still too large
+        if any((new_labels == l).sum() > max_cluster_size for l in set(new_labels) if l != -1):
+            # Recurse
+            return self._split_large_clusters(vectors, new_labels, max_cluster_size, clustering_method, sample_weights, depth+1)
+        return new_labels
     """Enhanced clustering engine with business intelligence"""
     
     def __init__(self):
@@ -107,18 +145,24 @@ class EnhancedClusteringEngine:
             best_method, best_result = self._select_best_clustering(results, vectors)
             logger.info(f"Selected {best_method} clustering with silhouette score: {best_result['silhouette_score']:.3f}")
             
+            # Enforce max cluster size (10% of dataset)
+            total_events = len(vectors)
+            max_cluster_size = max(1, int(total_events * 0.10))
+            final_labels = self._split_large_clusters(
+                vectors, np.array(best_result["labels"]), max_cluster_size, best_method, sample_weights
+            )
             # Save clustering results
             cluster_mapping = self._save_clustering_results(
-                db, embedding_ids, best_result["labels"], best_method, best_result
+                db, embedding_ids, final_labels, best_method, best_result
             )
-            
             return {
                 "success": True,
                 "method": best_method,
-                "num_clusters": best_result["num_clusters"],
+                "num_clusters": len(set(final_labels)) - (1 if -1 in final_labels else 0),
                 "silhouette_score": best_result["silhouette_score"],
                 "cluster_mapping": cluster_mapping,
-                "business_weighted": use_business_weights
+                "business_weighted": use_business_weights,
+                "max_cluster_size": max_cluster_size
             }
             
         except Exception as e:
