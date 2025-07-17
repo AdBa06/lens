@@ -2,10 +2,8 @@ import subprocess
 import sys
 
 steps = [
-    ("Ingesting Excel data...", [sys.executable, "excel_import.py", "import", "synthetic_data.xlsx"]),
-    ("Generating embeddings...", [sys.executable, "run_embeddings.py", "--regenerate"]),
-    ("Clustering embeddings...", [sys.executable, "clustering.py", "--regenerate"]),
-    ("Generating cluster summaries...", [sys.executable, "regenerate_all_clusters_direct.py"]),
+    ("Running Customer Analysis Pipeline...", [sys.executable, "customer_analysis/lens_customer.py"]),
+    ("Running Error Analysis Pipeline...", [sys.executable, "error_analysis/lens_error.py"]),
     ("Starting dashboard (Ctrl+C to stop)...", [sys.executable, "enhanced_dashboard.py"])
 ]
 
@@ -17,4 +15,4 @@ for message, cmd in steps:
         print(f"Step failed: {e}")
         sys.exit(1)
 
-print("\nAll steps completed. Dashboard is running.")
+print("\nAll steps completed.")

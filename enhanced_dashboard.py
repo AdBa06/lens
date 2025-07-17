@@ -305,60 +305,528 @@ async def dashboard_home():
         <meta charset='utf-8'>
         <meta name='viewport' content='width=device-width, initial-scale=1'>
         <style>
-            body {{ font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; margin: 0; padding: 20px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: #333; min-height: 100vh; }}
-            .header {{ background: rgba(255,255,255,0.95); color: #2d3748; padding: 30px; border-radius: 15px; margin-bottom: 30px; text-align: center; box-shadow: 0 8px 32px rgba(0,0,0,0.1); backdrop-filter: blur(10px); }}
-            .nav {{ display: flex; gap: 20px; justify-content: center; margin-bottom: 30px; }}
-            .nav a {{ background: rgba(255,255,255,0.9); color: #4299e1; padding: 15px 30px; text-decoration: none; border-radius: 25px; font-weight: 600; transition: all 0.3s ease; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }}
-            .nav a:hover, .nav a.active {{ background: #4299e1; color: white; transform: translateY(-2px); box-shadow: 0 6px 20px rgba(66,153,225,0.3); }}
-            .cluster-grid {{ display: grid; grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); gap: 20px; }}
-            .cluster-card {{ background: rgba(255,255,255,0.95); padding: 25px; border-radius: 15px; box-shadow: 0 8px 32px rgba(0,0,0,0.1); backdrop-filter: blur(10px); transition: transform 0.3s ease; position: relative; }}
-            .cluster-card:hover {{ transform: translateY(-5px); }}
-            .cluster-header {{ display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; padding-bottom: 15px; border-bottom: 2px solid #e2e8f0; }}
-            .cluster-size {{ background: #10b981; color: white; padding: 5px 15px; border-radius: 20px; font-weight: bold; }}
-            .customer-intent {{ font-size: 1.3em; font-weight: bold; color: #065f46; margin-bottom: 8px; }}
-            .intent-description {{ color: #374151; font-size: 1.1em; line-height: 1.5; margin-bottom: 15px; }}
-            .expand-btn {{ background: #10b981; color: white; border: none; border-radius: 6px; padding: 6px 16px; cursor: pointer; font-size: 1em; margin-bottom: 10px; }}
-            .expand-btn:hover {{ background: #059669; }}
-            .prompts-list {{ display: none; max-height: 300px; overflow-y: auto; background: #f0fdf4; border-radius: 8px; margin-top: 10px; padding: 10px; }}
-            .prompts-list.expanded {{ display: block; }}
-            .prompt-item {{ padding: 6px 0; border-bottom: 1px solid #d1fae5; font-size: 0.98em; }}
-            .prompt-item:last-child {{ border-bottom: none; }}
+            /* Microsoft Fluent Design System - Enhanced & Dynamic */
+            * {{ box-sizing: border-box; }}
+            
+            body {{ 
+                font-family: 'Segoe UI', system-ui, -apple-system, BlinkMacSystemFont, sans-serif; 
+                margin: 0; 
+                padding: 0; 
+                background: linear-gradient(135deg, #0078d4 0%, #106ebe 100%); 
+                color: #323130; 
+                min-height: 100vh; 
+                font-size: 14px;
+                line-height: 1.4;
+                overflow-x: hidden;
+            }}
+            
+            .container {{
+                max-width: 1400px;
+                margin: 0 auto;
+                padding: 20px;
+            }}
+            
+            .header {{ 
+                background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%); 
+                color: #323130; 
+                padding: 40px; 
+                border-radius: 12px; 
+                margin-bottom: 32px; 
+                text-align: center; 
+                box-shadow: 0 8px 32px rgba(0,0,0,0.12); 
+                border: 1px solid rgba(255,255,255,0.2);
+                position: relative;
+                overflow: hidden;
+            }}
+            
+            .header::before {{
+                content: '';
+                position: absolute;
+                top: 0;
+                left: -100%;
+                width: 100%;
+                height: 100%;
+                background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
+                animation: shimmer 3s infinite;
+            }}
+            
+            @keyframes shimmer {{
+                0% {{ left: -100%; }}
+                100% {{ left: 100%; }}
+            }}
+            
+            .header h1 {{ 
+                margin: 0 0 12px 0; 
+                font-size: 36px; 
+                font-weight: 700; 
+                color: #106ebe; 
+                position: relative;
+                z-index: 1;
+            }}
+            
+            .header p {{ 
+                margin: 0; 
+                color: #605e5c; 
+                font-size: 18px; 
+                position: relative;
+                z-index: 1;
+            }}
+            
+            .nav {{ 
+                display: flex; 
+                gap: 8px; 
+                justify-content: center; 
+                margin-bottom: 32px; 
+                background: rgba(255,255,255,0.1);
+                padding: 8px;
+                border-radius: 50px;
+                backdrop-filter: blur(10px);
+                width: fit-content;
+                margin-left: auto;
+                margin-right: auto;
+            }}
+            
+            .nav a {{ 
+                background: transparent; 
+                color: #ffffff; 
+                padding: 14px 28px; 
+                text-decoration: none; 
+                border-radius: 25px; 
+                font-weight: 600; 
+                font-size: 14px;
+                transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); 
+                position: relative;
+                overflow: hidden;
+            }}
+            
+            .nav a::before {{
+                content: '';
+                position: absolute;
+                top: 0;
+                left: -100%;
+                width: 100%;
+                height: 100%;
+                background: rgba(255,255,255,0.2);
+                transition: left 0.3s ease;
+            }}
+            
+            .nav a:hover::before {{
+                left: 0;
+            }}
+            
+            .nav a.active {{ 
+                background: #ffffff; 
+                color: #0078d4; 
+                box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            }}
+            
+            .stats-bar {{
+                display: flex;
+                gap: 24px;
+                margin-bottom: 32px;
+                justify-content: center;
+            }}
+            
+            .stat-card {{
+                background: rgba(255,255,255,0.95);
+                padding: 24px;
+                border-radius: 12px;
+                text-align: center;
+                box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+                min-width: 140px;
+                transition: transform 0.3s ease;
+            }}
+            
+            .stat-card:hover {{
+                transform: translateY(-4px);
+            }}
+            
+            .stat-number {{
+                font-size: 32px;
+                font-weight: 700;
+                color: #0078d4;
+                margin-bottom: 8px;
+            }}
+            
+            .stat-label {{
+                color: #605e5c;
+                font-size: 14px;
+                font-weight: 500;
+            }}
+            
+            .cluster-grid {{ 
+                display: grid; 
+                grid-template-columns: repeat(auto-fit, minmax(450px, 1fr)); 
+                gap: 24px; 
+            }}
+            
+            .cluster-card {{ 
+                background: #ffffff; 
+                padding: 0; 
+                border-radius: 16px; 
+                box-shadow: 0 4px 20px rgba(0,0,0,0.08); 
+                border: 1px solid rgba(255,255,255,0.2);
+                transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1); 
+                position: relative; 
+                overflow: hidden;
+            }}
+            
+            .cluster-card:hover {{ 
+                transform: translateY(-8px) scale(1.02); 
+                box-shadow: 0 20px 40px rgba(0,0,0,0.15); 
+            }}
+            
+            .cluster-card::before {{
+                content: '';
+                position: absolute;
+                top: 0;
+                left: 0;
+                right: 0;
+                height: 4px;
+                background: linear-gradient(90deg, #0078d4, #106ebe, #005a9e);
+            }}
+            
+            .cluster-content {{
+                padding: 28px;
+            }}
+            
+            .cluster-header {{ 
+                display: flex; 
+                justify-content: space-between; 
+                align-items: flex-start; 
+                margin-bottom: 20px; 
+            }}
+            
+            .cluster-size {{ 
+                background: linear-gradient(135deg, #0078d4, #106ebe); 
+                color: #ffffff; 
+                padding: 8px 16px; 
+                border-radius: 20px; 
+                font-weight: 600; 
+                font-size: 12px;
+                text-transform: uppercase;
+                letter-spacing: 0.5px;
+                box-shadow: 0 2px 8px rgba(0,120,212,0.3);
+            }}
+            
+            .customer-intent {{ 
+                font-size: 20px; 
+                font-weight: 600; 
+                color: #323130; 
+                margin-bottom: 12px; 
+                flex: 1;
+                margin-right: 20px;
+                line-height: 1.3;
+            }}
+            
+            .intent-description {{ 
+                color: #605e5c; 
+                font-size: 15px; 
+                line-height: 1.6; 
+                margin-bottom: 20px; 
+            }}
+            
+            .expand-btn {{ 
+                background: linear-gradient(135deg, #0078d4, #106ebe); 
+                color: #ffffff; 
+                border: none; 
+                border-radius: 8px; 
+                padding: 12px 24px; 
+                cursor: pointer; 
+                font-size: 14px; 
+                font-weight: 600;
+                transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+                margin-bottom: 16px; 
+                position: relative;
+                overflow: hidden;
+            }}
+            
+            .expand-btn::before {{
+                content: '';
+                position: absolute;
+                top: 0;
+                left: -100%;
+                width: 100%;
+                height: 100%;
+                background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+                transition: left 0.5s ease;
+            }}
+            
+            .expand-btn:hover::before {{
+                left: 100%;
+            }}
+            
+            .expand-btn:hover {{ 
+                transform: translateY(-2px);
+                box-shadow: 0 8px 25px rgba(0,120,212,0.3);
+            }}
+            
+            /* Modal Overlay */
+            .modal-overlay {{
+                position: fixed;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                background: rgba(0,0,0,0.6);
+                backdrop-filter: blur(8px);
+                z-index: 1000;
+                opacity: 0;
+                visibility: hidden;
+                transition: all 0.3s ease;
+            }}
+            
+            .modal-overlay.active {{
+                opacity: 1;
+                visibility: visible;
+            }}
+            
+            /* Modal Content */
+            .modal {{
+                position: fixed;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%) scale(0.8);
+                background: #ffffff;
+                border-radius: 16px;
+                box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+                max-width: 700px;
+                width: 90%;
+                max-height: 80vh;
+                overflow: hidden;
+                z-index: 1001;
+                transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            }}
+            
+            .modal.active {{
+                transform: translate(-50%, -50%) scale(1);
+            }}
+            
+            .modal-header {{
+                background: linear-gradient(135deg, #0078d4, #106ebe);
+                color: white;
+                padding: 24px;
+                position: relative;
+            }}
+            
+            .modal-title {{
+                font-size: 20px;
+                font-weight: 600;
+                margin: 0;
+            }}
+            
+            .modal-close {{
+                position: absolute;
+                top: 20px;
+                right: 20px;
+                background: rgba(255,255,255,0.2);
+                border: none;
+                color: white;
+                font-size: 24px;
+                width: 36px;
+                height: 36px;
+                border-radius: 50%;
+                cursor: pointer;
+                transition: background 0.2s ease;
+            }}
+            
+            .modal-close:hover {{
+                background: rgba(255,255,255,0.3);
+            }}
+            
+            .modal-body {{
+                padding: 24px;
+                max-height: 400px;
+                overflow-y: auto;
+            }}
+            
+            .prompt-item-modal {{ 
+                padding: 16px 0; 
+                border-bottom: 1px solid #f3f2f1; 
+                font-size: 14px; 
+                color: #323130;
+                line-height: 1.5;
+                transition: background 0.2s ease;
+            }}
+            
+            .prompt-item-modal:hover {{
+                background: #f8f9fa;
+                padding-left: 12px;
+                border-radius: 8px;
+            }}
+            
+            .prompt-item-modal:last-child {{ 
+                border-bottom: none; 
+            }}
+            
+            .prompt-number {{
+                display: inline-block;
+                background: #0078d4;
+                color: white;
+                width: 24px;
+                height: 24px;
+                border-radius: 50%;
+                text-align: center;
+                line-height: 24px;
+                font-size: 12px;
+                font-weight: 600;
+                margin-right: 12px;
+            }}
+            
+            /* Custom scrollbar */
+            .modal-body::-webkit-scrollbar {{ 
+                width: 8px; 
+            }}
+            .modal-body::-webkit-scrollbar-track {{ 
+                background: #f1f1f1; 
+                border-radius: 4px;
+            }}
+            .modal-body::-webkit-scrollbar-thumb {{ 
+                background: #c8c6c4; 
+                border-radius: 4px; 
+            }}
+            .modal-body::-webkit-scrollbar-thumb:hover {{ 
+                background: #a19f9d; 
+            }}
+            
+            /* Loading Animation */
+            .loading {{
+                display: inline-block;
+                width: 20px;
+                height: 20px;
+                border: 2px solid #f3f3f3;
+                border-top: 2px solid #0078d4;
+                border-radius: 50%;
+                animation: spin 1s linear infinite;
+                margin-right: 8px;
+            }}
+            
+            @keyframes spin {{
+                0% {{ transform: rotate(0deg); }}
+                100% {{ transform: rotate(360deg); }}
+            }}
+            
+            /* Responsive Design */
+            @media (max-width: 768px) {{
+                .container {{
+                    padding: 12px;
+                }}
+                
+                .cluster-grid {{
+                    grid-template-columns: 1fr;
+                }}
+                
+                .stats-bar {{
+                    flex-wrap: wrap;
+                    gap: 16px;
+                }}
+                
+                .modal {{
+                    width: 95%;
+                    margin: 20px;
+                }}
+            }}
         </style>
     </head>
     <body>
-        <div class="header">
-            <h1>🔍 Customer Insights</h1>
-            <p>Understanding what customers are asking Security Copilot about, based on AI analysis of prompts.</p>
+        <div class="container">
+            <div class="header">
+                <h1>Customer Insights</h1>
+                <p>Understanding what customers are asking Security Copilot about, based on AI analysis of prompts.</p>
+            </div>
+            <div class="nav">
+                <a href="/" class="active">Customer Insights</a>
+                <a href="/clusters">Error Analysis</a>
+            </div>
+            <div class="stats-bar">
+                <div class="stat-card">
+                    <div class="stat-number">{len(analytics['clusters'])}</div>
+                    <div class="stat-label">Intent Categories</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">{sum(cluster['size'] for cluster in analytics['clusters'])}</div>
+                    <div class="stat-label">Total Interactions</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">{max(cluster['size'] for cluster in analytics['clusters']) if analytics['clusters'] else 0}</div>
+                    <div class="stat-label">Largest Category</div>
+                </div>
+            </div>
+            <div class="cluster-grid">
+                {chr(10).join([
+                    f'''<div class="cluster-card">
+                        <div class="cluster-content">
+                            <div class="cluster-header">
+                                <div class="customer-intent">{(cluster_summaries.get(cluster['cluster_id']).label or 'Customer Intent') if cluster_summaries.get(cluster['cluster_id']) else 'Customer Intent'}</div>
+                                <div class="cluster-size">{cluster['size']} customers</div>
+                            </div>
+                            <div class="intent-description">
+                                {cluster['llm_summary'][:250]}{'...' if len(cluster['llm_summary']) > 250 else ''}
+                            </div>
+                            <button class="expand-btn" onclick="openModal('modal-{cluster['cluster_id']}')">
+                                <span class="loading" style="display: none;"></span>
+                                View Sample Questions
+                            </button>
+                        </div>
+                    </div>''' for cluster in analytics['clusters']])}
+            </div>
         </div>
-        <div class="nav">
-            <a href="/" class="active">� Customer Insights</a>
-            <a href="/clusters">⚠️ Error Analysis</a>
-        </div>
-        <div class="cluster-grid">
-            {chr(10).join([
-                f'''<div class="cluster-card">
-                    <div class="cluster-header">
-                        <span class="customer-intent">{(cluster_summaries.get(cluster['cluster_id']).label or 'Customer Intent') if cluster_summaries.get(cluster['cluster_id']) else 'Customer Intent'}</span>
-                        <div class="cluster-size">{cluster['size']} customers</div>
+        
+        <!-- Modals for each cluster -->
+        {chr(10).join([
+            f'''<div class="modal-overlay" id="overlay-{cluster['cluster_id']}">
+                <div class="modal" id="modal-{cluster['cluster_id']}">
+                    <div class="modal-header">
+                        <h3 class="modal-title">{(cluster_summaries.get(cluster['cluster_id']).label or 'Customer Questions') if cluster_summaries.get(cluster['cluster_id']) else 'Customer Questions'}</h3>
+                        <button class="modal-close" onclick="closeModal('modal-{cluster['cluster_id']}')">&times;</button>
                     </div>
-                    <div class="intent-description">
-                        {cluster['llm_summary'][:300]}{'...' if len(cluster['llm_summary']) > 300 else ''}
+                    <div class="modal-body">
+                        {chr(10).join([f'<div class="prompt-item-modal"><span class="prompt-number">{i+1}</span>"{p}"</div>' for i, p in enumerate(cluster_prompts.get(cluster['cluster_id'], [])[:15])])}
                     </div>
-                    <button class="expand-btn" onclick="togglePrompts('prompts-{cluster['cluster_id']}')">View Sample Questions</button>
-                    <div class="prompts-list" id="prompts-{cluster['cluster_id']}">
-                        {chr(10).join([f'<div class="prompt-item">"{p[:150]}..."</div>' for p in cluster_prompts.get(cluster['cluster_id'], [])[:8]])}
-                    </div>
-                </div>''' for cluster in analytics['clusters']])}
-        </div>
+                </div>
+            </div>''' for cluster in analytics['clusters']])}
+        
         <script>
-            function togglePrompts(id) {{
-                var el = document.getElementById(id);
-                if (el.classList.contains('expanded')) {{
-                    el.classList.remove('expanded');
-                }} else {{
-                    el.classList.add('expanded');
-                }}
+            function openModal(modalId) {{
+                const overlay = document.getElementById('overlay-' + modalId.split('-')[1]);
+                const modal = document.getElementById(modalId);
+                
+                overlay.classList.add('active');
+                modal.classList.add('active');
+                
+                // Prevent body scroll
+                document.body.style.overflow = 'hidden';
             }}
+            
+            function closeModal(modalId) {{
+                const overlay = document.getElementById('overlay-' + modalId.split('-')[1]);
+                const modal = document.getElementById(modalId);
+                
+                overlay.classList.remove('active');
+                modal.classList.remove('active');
+                
+                // Restore body scroll
+                document.body.style.overflow = 'auto';
+            }}
+            
+            // Close modal when clicking overlay
+            document.addEventListener('click', function(e) {{
+                if (e.target.classList.contains('modal-overlay')) {{
+                    const modalId = e.target.querySelector('.modal').id;
+                    closeModal(modalId);
+                }}
+            }});
+            
+            // Close modal with Escape key
+            document.addEventListener('keydown', function(e) {{
+                if (e.key === 'Escape') {{
+                    const activeModal = document.querySelector('.modal-overlay.active');
+                    if (activeModal) {{
+                        const modalId = activeModal.querySelector('.modal').id;
+                        closeModal(modalId);
+                    }}
+                }}
+            }});
         </script>
     </body>
     </html>
@@ -393,71 +861,575 @@ async def ml_cluster_dashboard():
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <style>
-            body {{ font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; margin: 0; padding: 20px; background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); color: #333; min-height: 100vh; }}
-            .header {{ background: rgba(255, 255, 255, 0.95); color: #2d3748; padding: 30px; border-radius: 15px; margin-bottom: 30px; text-align: center; box-shadow: 0 8px 32px rgba(0,0,0,0.1); backdrop-filter: blur(10px); }}
-            .nav {{ display: flex; gap: 20px; justify-content: center; margin-bottom: 30px; }}
-            .nav a {{ background: rgba(255, 255, 255, 0.9); color: #dc2626; padding: 15px 30px; text-decoration: none; border-radius: 25px; font-weight: 600; transition: all 0.3s ease; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }}
-            .nav a:hover, .nav a.active {{ background: #dc2626; color: white; transform: translateY(-2px); box-shadow: 0 6px 20px rgba(220,38,38,0.3); }}
-            .cluster-grid {{ display: grid; grid-template-columns: repeat(auto-fit, minmax(450px, 1fr)); gap: 20px; }}
-            .cluster-card {{ background: rgba(255, 255, 255, 0.95); padding: 25px; border-radius: 15px; box-shadow: 0 8px 32px rgba(0,0,0,0.1); backdrop-filter: blur(10px); transition: transform 0.3s ease; position: relative; }}
-            .cluster-card:hover {{ transform: translateY(-5px); }}
-            .cluster-header {{ display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; padding-bottom: 15px; border-bottom: 2px solid #fecaca; }}
-            .cluster-size {{ background: #dc2626; color: white; padding: 5px 15px; border-radius: 20px; font-weight: bold; }}
-            .error-type {{ font-size: 1.3em; font-weight: bold; color: #991b1b; margin-bottom: 8px; }}
-            .root-cause {{ background: #fef2f2; padding: 15px; border-radius: 8px; margin-bottom: 15px; border-left: 4px solid #dc2626; }}
-            .recommendations {{ background: #f0fdf4; padding: 15px; border-radius: 8px; margin-bottom: 15px; border-left: 4px solid #10b981; }}
-            .expand-btn {{ background: #dc2626; color: white; border: none; border-radius: 6px; padding: 6px 16px; cursor: pointer; font-size: 1em; margin-bottom: 10px; }}
-            .expand-btn:hover {{ background: #991b1b; }}
-            .prompts-list {{ display: none; max-height: 300px; overflow-y: auto; background: #fef2f2; border-radius: 8px; margin-top: 10px; padding: 10px; }}
-            .prompts-list.expanded {{ display: block; }}
-            .prompt-item {{ padding: 6px 0; border-bottom: 1px solid #fecaca; font-size: 0.98em; }}
-            .prompt-item:last-child {{ border-bottom: none; }}
+            /* Microsoft Fluent Design System - Error Analysis Enhanced */
+            * {{ box-sizing: border-box; }}
+            
+            body {{ 
+                font-family: 'Segoe UI', system-ui, -apple-system, BlinkMacSystemFont, sans-serif; 
+                margin: 0; 
+                padding: 0; 
+                background: linear-gradient(135deg, #d83b01 0%, #c73e1d 100%); 
+                color: #323130; 
+                min-height: 100vh; 
+                font-size: 14px;
+                line-height: 1.4;
+                overflow-x: hidden;
+            }}
+            
+            .container {{
+                max-width: 1400px;
+                margin: 0 auto;
+                padding: 20px;
+            }}
+            
+            .header {{ 
+                background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%); 
+                color: #323130; 
+                padding: 40px; 
+                border-radius: 12px; 
+                margin-bottom: 32px; 
+                text-align: center; 
+                box-shadow: 0 8px 32px rgba(0,0,0,0.12); 
+                border: 1px solid rgba(255,255,255,0.2);
+                position: relative;
+                overflow: hidden;
+            }}
+            
+            .header::before {{
+                content: '';
+                position: absolute;
+                top: 0;
+                left: -100%;
+                width: 100%;
+                height: 100%;
+                background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
+                animation: shimmer 3s infinite;
+            }}
+            
+            @keyframes shimmer {{
+                0% {{ left: -100%; }}
+                100% {{ left: 100%; }}
+            }}
+            
+            .header h1 {{ 
+                margin: 0 0 12px 0; 
+                font-size: 36px; 
+                font-weight: 700; 
+                color: #d83b01; 
+                position: relative;
+                z-index: 1;
+            }}
+            
+            .header p {{ 
+                margin: 0; 
+                color: #605e5c; 
+                font-size: 18px; 
+                position: relative;
+                z-index: 1;
+            }}
+            
+            .nav {{ 
+                display: flex; 
+                gap: 8px; 
+                justify-content: center; 
+                margin-bottom: 32px; 
+                background: rgba(255,255,255,0.1);
+                padding: 8px;
+                border-radius: 50px;
+                backdrop-filter: blur(10px);
+                width: fit-content;
+                margin-left: auto;
+                margin-right: auto;
+            }}
+            
+            .nav a {{ 
+                background: transparent; 
+                color: #ffffff; 
+                padding: 14px 28px; 
+                text-decoration: none; 
+                border-radius: 25px; 
+                font-weight: 600; 
+                font-size: 14px;
+                transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); 
+                position: relative;
+                overflow: hidden;
+            }}
+            
+            .nav a::before {{
+                content: '';
+                position: absolute;
+                top: 0;
+                left: -100%;
+                width: 100%;
+                height: 100%;
+                background: rgba(255,255,255,0.2);
+                transition: left 0.3s ease;
+            }}
+            
+            .nav a:hover::before {{
+                left: 0;
+            }}
+            
+            .nav a.active {{ 
+                background: #ffffff; 
+                color: #d83b01; 
+                box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            }}
+            
+            .stats-bar {{
+                display: flex;
+                gap: 24px;
+                margin-bottom: 32px;
+                justify-content: center;
+            }}
+            
+            .stat-card {{
+                background: rgba(255,255,255,0.95);
+                padding: 24px;
+                border-radius: 12px;
+                text-align: center;
+                box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+                min-width: 140px;
+                transition: transform 0.3s ease;
+            }}
+            
+            .stat-card:hover {{
+                transform: translateY(-4px);
+            }}
+            
+            .stat-number {{
+                font-size: 32px;
+                font-weight: 700;
+                color: #d83b01;
+                margin-bottom: 8px;
+            }}
+            
+            .stat-label {{
+                color: #605e5c;
+                font-size: 14px;
+                font-weight: 500;
+            }}
+            
+            .cluster-grid {{ 
+                display: grid; 
+                grid-template-columns: repeat(auto-fit, minmax(500px, 1fr)); 
+                gap: 24px; 
+            }}
+            
+            .cluster-card {{ 
+                background: #ffffff; 
+                padding: 0; 
+                border-radius: 16px; 
+                box-shadow: 0 4px 20px rgba(0,0,0,0.08); 
+                border: 1px solid rgba(255,255,255,0.2);
+                transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1); 
+                position: relative; 
+                overflow: hidden;
+            }}
+            
+            .cluster-card:hover {{ 
+                transform: translateY(-8px) scale(1.02); 
+                box-shadow: 0 20px 40px rgba(0,0,0,0.15); 
+            }}
+            
+            .cluster-card::before {{
+                content: '';
+                position: absolute;
+                top: 0;
+                left: 0;
+                right: 0;
+                height: 4px;
+                background: linear-gradient(90deg, #d83b01, #c73e1d, #a02d00);
+            }}
+            
+            .cluster-content {{
+                padding: 28px;
+            }}
+            
+            .cluster-header {{ 
+                display: flex; 
+                justify-content: space-between; 
+                align-items: flex-start; 
+                margin-bottom: 20px; 
+            }}
+            
+            .cluster-size {{ 
+                background: linear-gradient(135deg, #d83b01, #c73e1d); 
+                color: #ffffff; 
+                padding: 8px 16px; 
+                border-radius: 20px; 
+                font-weight: 600; 
+                font-size: 12px;
+                text-transform: uppercase;
+                letter-spacing: 0.5px;
+                box-shadow: 0 2px 8px rgba(216,59,1,0.3);
+            }}
+            
+            .error-type {{ 
+                font-size: 20px; 
+                font-weight: 600; 
+                color: #323130; 
+                margin-bottom: 12px; 
+                flex: 1;
+                margin-right: 20px;
+                line-height: 1.3;
+            }}
+            
+            .root-cause {{ 
+                background: linear-gradient(135deg, #fef9f9, #fdeaea); 
+                padding: 20px; 
+                border-radius: 12px; 
+                margin-bottom: 20px; 
+                border-left: 4px solid #d83b01; 
+                color: #323130;
+                font-size: 14px;
+                position: relative;
+            }}
+            
+            .root-cause::before {{
+                content: '';
+                position: absolute;
+                top: 12px;
+                right: 12px;
+                width: 24px;
+                height: 24px;
+                background: #d83b01;
+                border-radius: 50%;
+                opacity: 0.1;
+            }}
+            
+            .root-cause strong {{ 
+                color: #d83b01; 
+                font-weight: 600;
+                font-size: 15px;
+            }}
+            
+            .recommendations {{ 
+                background: linear-gradient(135deg, #f8fff8, #eaf7ea); 
+                padding: 20px; 
+                border-radius: 12px; 
+                margin-bottom: 20px; 
+                border-left: 4px solid #107c10; 
+                color: #323130;
+                font-size: 14px;
+                position: relative;
+            }}
+            
+            .recommendations::before {{
+                content: '';
+                position: absolute;
+                top: 12px;
+                right: 12px;
+                width: 24px;
+                height: 24px;
+                background: #107c10;
+                border-radius: 50%;
+                opacity: 0.1;
+            }}
+            
+            .recommendations strong {{ 
+                color: #107c10; 
+                font-weight: 600;
+                font-size: 15px;
+            }}
+            
+            .expand-btn {{ 
+                background: linear-gradient(135deg, #d83b01, #c73e1d); 
+                color: #ffffff; 
+                border: none; 
+                border-radius: 8px; 
+                padding: 12px 24px; 
+                cursor: pointer; 
+                font-size: 14px; 
+                font-weight: 600;
+                transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+                margin-bottom: 16px; 
+                position: relative;
+                overflow: hidden;
+            }}
+            
+            .expand-btn::before {{
+                content: '';
+                position: absolute;
+                top: 0;
+                left: -100%;
+                width: 100%;
+                height: 100%;
+                background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+                transition: left 0.5s ease;
+            }}
+            
+            .expand-btn:hover::before {{
+                left: 100%;
+            }}
+            
+            .expand-btn:hover {{ 
+                transform: translateY(-2px);
+                box-shadow: 0 8px 25px rgba(216,59,1,0.3);
+            }}
+            
+            /* Modal Overlay */
+            .modal-overlay {{
+                position: fixed;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                background: rgba(0,0,0,0.6);
+                backdrop-filter: blur(8px);
+                z-index: 1000;
+                opacity: 0;
+                visibility: hidden;
+                transition: all 0.3s ease;
+            }}
+            
+            .modal-overlay.active {{
+                opacity: 1;
+                visibility: visible;
+            }}
+            
+            /* Modal Content */
+            .modal {{
+                position: fixed;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%) scale(0.8);
+                background: #ffffff;
+                border-radius: 16px;
+                box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+                max-width: 700px;
+                width: 90%;
+                max-height: 80vh;
+                overflow: hidden;
+                z-index: 1001;
+                transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            }}
+            
+            .modal.active {{
+                transform: translate(-50%, -50%) scale(1);
+            }}
+            
+            .modal-header {{
+                background: linear-gradient(135deg, #d83b01, #c73e1d);
+                color: white;
+                padding: 24px;
+                position: relative;
+            }}
+            
+            .modal-title {{
+                font-size: 20px;
+                font-weight: 600;
+                margin: 0;
+            }}
+            
+            .modal-close {{
+                position: absolute;
+                top: 20px;
+                right: 20px;
+                background: rgba(255,255,255,0.2);
+                border: none;
+                color: white;
+                font-size: 24px;
+                width: 36px;
+                height: 36px;
+                border-radius: 50%;
+                cursor: pointer;
+                transition: background 0.2s ease;
+            }}
+            
+            .modal-close:hover {{
+                background: rgba(255,255,255,0.3);
+            }}
+            
+            .modal-body {{
+                padding: 24px;
+                max-height: 400px;
+                overflow-y: auto;
+            }}
+            
+            .prompt-item-modal {{ 
+                padding: 16px 0; 
+                border-bottom: 1px solid #f3f2f1; 
+                font-size: 14px; 
+                color: #323130;
+                line-height: 1.5;
+                transition: background 0.2s ease;
+            }}
+            
+            .prompt-item-modal:hover {{
+                background: #fef9f9;
+                padding-left: 12px;
+                border-radius: 8px;
+            }}
+            
+            .prompt-item-modal:last-child {{ 
+                border-bottom: none; 
+            }}
+            
+            .prompt-number {{
+                display: inline-block;
+                background: #d83b01;
+                color: white;
+                width: 24px;
+                height: 24px;
+                border-radius: 50%;
+                text-align: center;
+                line-height: 24px;
+                font-size: 12px;
+                font-weight: 600;
+                margin-right: 12px;
+            }}
+            
+            .error-indicator {{
+                color: #d83b01;
+                font-weight: 600;
+                margin-right: 8px;
+            }}
+            
+            /* Custom scrollbar */
+            .modal-body::-webkit-scrollbar {{ 
+                width: 8px; 
+            }}
+            .modal-body::-webkit-scrollbar-track {{ 
+                background: #f1f1f1; 
+                border-radius: 4px;
+            }}
+            .modal-body::-webkit-scrollbar-thumb {{ 
+                background: #c8c6c4; 
+                border-radius: 4px; 
+            }}
+            .modal-body::-webkit-scrollbar-thumb:hover {{ 
+                background: #a19f9d; 
+            }}
+            
+            /* Responsive Design */
+            @media (max-width: 768px) {{
+                .container {{
+                    padding: 12px;
+                }}
+                
+                .cluster-grid {{
+                    grid-template-columns: 1fr;
+                }}
+                
+                .stats-bar {{
+                    flex-wrap: wrap;
+                    gap: 16px;
+                }}
+                
+                .modal {{
+                    width: 95%;
+                    margin: 20px;
+                }}
+            }}
         </style>
     </head>
     <body>
-        <div class="header">
-            <h1>⚠️ Error Analysis</h1>
-            <p>AI-powered root cause analysis and recommended fixes for Security Copilot failures.</p>
+        <div class="container">
+            <div class="header">
+                <h1>Error Analysis</h1>
+                <p>AI-powered root cause analysis and recommended fixes for Security Copilot failures.</p>
+            </div>
+            <div class="nav">
+                <a href="/">Customer Insights</a>
+                <a href="/clusters" class="active">Error Analysis</a>
+                <a href="/api/recluster" onclick="recluster()">Re-run Analysis</a>
+            </div>
+            <div class="stats-bar">
+                <div class="stat-card">
+                    <div class="stat-number">{len(analytics['clusters'])}</div>
+                    <div class="stat-label">Error Patterns</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">{sum(cluster['size'] for cluster in analytics['clusters'])}</div>
+                    <div class="stat-label">Total Failures</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">{max(cluster['size'] for cluster in analytics['clusters']) if analytics['clusters'] else 0}</div>
+                    <div class="stat-label">Largest Error Group</div>
+                </div>
+            </div>
+            <div class="cluster-grid">
+                {chr(10).join([
+                    f'''<div class="cluster-card">
+                        <div class="cluster-content">
+                            <div class="cluster-header">
+                                <div class="error-type">{(cluster_summaries.get(cluster['cluster_id']).label or 'Error Pattern') if cluster_summaries.get(cluster['cluster_id']) else 'Error Pattern'}</div>
+                                <div class="cluster-size">{cluster['size']} failures</div>
+                            </div>
+                            <div class="root-cause">
+                                <strong>Root Cause Analysis:</strong><br>
+                                {cluster['root_cause'][:200]}{'...' if len(cluster['root_cause']) > 200 else ''}
+                            </div>
+                            <div class="recommendations">
+                                <strong>Recommended Fixes:</strong><br>
+                                {'<br>• '.join([''] + cluster.get('recommendations', ['No recommendations available'])[:3])}
+                            </div>
+                            <button class="expand-btn" onclick="openModal('modal-{cluster['cluster_id']}')">
+                                <span class="loading" style="display: none;"></span>
+                                View Failed Prompts
+                            </button>
+                        </div>
+                    </div>''' for cluster in analytics['clusters']])}
+            </div>
         </div>
-        <div class="nav">
-            <a href="/">🔍 Customer Insights</a>
-            <a href="/clusters" class="active">⚠️ Error Analysis</a>
-            <a href="/api/recluster" onclick="recluster()">🔄 Re-run Analysis</a>
-        </div>
-            <a href="/">📊 Business Insights</a>
-            <a href="/clusters" class="active">🎯 ML Cluster Analysis</a>
-            <a href="/api/recluster" onclick="recluster()">🔄 Re-run Clustering</a>
-        </div>
-        <div class="cluster-grid">
-            {chr(10).join([
-                f'''<div class="cluster-card">
-                    <div class="cluster-header">
-                        <span class="error-type">{(cluster_summaries.get(cluster['cluster_id']).label or 'Error Pattern') if cluster_summaries.get(cluster['cluster_id']) else 'Error Pattern'}</span>
-                        <div class="cluster-size">{cluster['size']} failures</div>
+        
+        <!-- Modals for each cluster -->
+        {chr(10).join([
+            f'''<div class="modal-overlay" id="overlay-{cluster['cluster_id']}">
+                <div class="modal" id="modal-{cluster['cluster_id']}">
+                    <div class="modal-header">
+                        <h3 class="modal-title">Failed Prompts - {(cluster_summaries.get(cluster['cluster_id']).label or 'Error Pattern') if cluster_summaries.get(cluster['cluster_id']) else 'Error Pattern'}</h3>
+                        <button class="modal-close" onclick="closeModal('modal-{cluster['cluster_id']}')">&times;</button>
                     </div>
-                    <div class="root-cause">
-                        <strong>🔍 Root Cause:</strong><br>
-                        {cluster['root_cause'][:300]}{'...' if len(cluster['root_cause']) > 300 else ''}
+                    <div class="modal-body">
+                        {chr(10).join([f'<div class="prompt-item-modal"><span class="prompt-number">{i+1}</span><span class="error-indicator">ERROR:</span>"{p}"</div>' for i, p in enumerate(cluster_prompts.get(cluster['cluster_id'], [])[:15])])}
                     </div>
-                    <div class="recommendations">
-                        <strong>🛠️ Recommended Fixes:</strong><br>
-                        {'<br>• '.join([''] + cluster.get('recommendations', ['No recommendations available']))}
-                    </div>
-                    <button class="expand-btn" onclick="togglePrompts('prompts-{cluster['cluster_id']}')">View Failed Prompts</button>
-                    <div class="prompts-list" id="prompts-{cluster['cluster_id']}">
-                        {chr(10).join([f'<div class="prompt-item">❌ "{p[:150]}..."</div>' for p in cluster_prompts.get(cluster['cluster_id'], [])[:8]])}
-                    </div>
-                </div>''' for cluster in analytics['clusters']])}
-        </div>
+                </div>
+            </div>''' for cluster in analytics['clusters']])}
+        
         <script>
-            function togglePrompts(id) {{
-                var el = document.getElementById(id);
-                if (el.classList.contains('expanded')) {{
-                    el.classList.remove('expanded');
-                }} else {{
-                    el.classList.add('expanded');
-                }}
+            function openModal(modalId) {{
+                const overlay = document.getElementById('overlay-' + modalId.split('-')[1]);
+                const modal = document.getElementById(modalId);
+                
+                overlay.classList.add('active');
+                modal.classList.add('active');
+                
+                // Prevent body scroll
+                document.body.style.overflow = 'hidden';
             }}
+            
+            function closeModal(modalId) {{
+                const overlay = document.getElementById('overlay-' + modalId.split('-')[1]);
+                const modal = document.getElementById(modalId);
+                
+                overlay.classList.remove('active');
+                modal.classList.remove('active');
+                
+                // Restore body scroll
+                document.body.style.overflow = 'auto';
+            }}
+            
+            // Close modal when clicking overlay
+            document.addEventListener('click', function(e) {{
+                if (e.target.classList.contains('modal-overlay')) {{
+                    const modalId = e.target.querySelector('.modal').id;
+                    closeModal(modalId);
+                }}
+            }});
+            
+            // Close modal with Escape key
+            document.addEventListener('keydown', function(e) {{
+                if (e.key === 'Escape') {{
+                    const activeModal = document.querySelector('.modal-overlay.active');
+                    if (activeModal) {{
+                        const modalId = activeModal.querySelector('.modal').id;
+                        closeModal(modalId);
+                    }}
+                }}
+            }});
+            
             function recluster() {{
                 if (confirm('Re-run clustering analysis? This may take a few minutes.')) {{
                     fetch('/api/recluster', {{method: 'POST'}})
